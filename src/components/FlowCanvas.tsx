@@ -421,7 +421,6 @@ const FlowCanvas = ({
           <Background color="#f0f0f0" gap={16} size={1} />
           <Controls />
           <MiniMap nodeStrokeWidth={3} zoomable pannable />
-
           {!readOnly && (
             <Panel
               position="top-right"
@@ -508,7 +507,6 @@ const FlowCanvas = ({
               </div>
             </Panel>
           )}
-
           <Panel
             position="bottom-left"
             className="bg-white p-2 rounded-md shadow-md"

@@ -79,7 +79,7 @@ const CourseMapView = ({
   readOnly = false,
 }: CourseMapViewProps) => {
   const [selectedModuleId, setSelectedModuleId] = useState(
-    modules[0]?.id || "",
+    modules && modules.length > 0 ? modules[0]?.id || "" : "",
   );
   const [activeTab, setActiveTab] = useState("map");
   const [zoomLevel, setZoomLevel] = useState(100);

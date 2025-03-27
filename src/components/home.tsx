@@ -8,73 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { AlertCircle, Info, Upload, FileText } from "lucide-react";
 
-// Create a placeholder QMFeedbackPanel component since it's not available
-const QMFeedbackPanel = ({
-  nodeId = "",
-  onClose = () => {},
-  onApplySuggestion = (nodeId: string, suggestion: string) => {},
-}) => {
-  return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">QM Feedback</h3>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          <AlertCircle className="h-4 w-4 mr-2" />
-          Close
-        </Button>
-      </div>
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600">
-          Feedback for node: {nodeId || "No node selected"}
-        </p>
-        <div className="border-t pt-4">
-          <h4 className="font-medium mb-2">Recommendations</h4>
-          <ul className="space-y-2">
-            <li className="bg-amber-50 p-3 rounded border border-amber-200">
-              <p className="text-sm font-medium">
-                Improve alignment with learning objectives
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                This element should clearly connect to one or more learning
-                objectives.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() =>
-                  onApplySuggestion(
-                    nodeId,
-                    "Improve alignment with learning objectives",
-                  )
-                }
-              >
-                Apply Suggestion
-              </Button>
-            </li>
-            <li className="bg-amber-50 p-3 rounded border border-amber-200">
-              <p className="text-sm font-medium">Add clear instructions</p>
-              <p className="text-xs text-gray-600 mt-1">
-                Students need clear instructions on how to complete this
-                activity.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() =>
-                  onApplySuggestion(nodeId, "Add clear instructions")
-                }
-              >
-                Apply Suggestion
-              </Button>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-};
+import QMFeedbackPanel from "./QMFeedbackPanel";
 
 const Home = () => {
   const [currentStep, setCurrentStep] = useState<"upload" | "map">("upload");
@@ -93,29 +27,45 @@ const Home = () => {
   };
 
   // Process the uploaded file
-  const handleProcessFile = () => {
+  const handleProcessFile = async () => {
     if (!selectedFile) return;
 
     setIsProcessing(true);
+    setProcessingProgress(10);
 
-    // Simulate file processing with progress updates
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setProcessingProgress(progress);
+    try {
+      // Import the parser dynamically to avoid issues with SSR
+      const { parseIMSCCFile } = await import("../utils/imsccParser");
 
-      if (progress >= 100) {
-        clearInterval(interval);
+      // Start parsing the file
+      setProcessingProgress(30);
+      const courseData = await parseIMSCCFile(selectedFile);
+      setProcessingProgress(80);
+
+      // Store the extracted data
+      localStorage.setItem("courseData", JSON.stringify(courseData));
+      setProcessingProgress(100);
+
+      // Move to the map view
+      setTimeout(() => {
         setIsProcessing(false);
         setCurrentStep("map");
-      }
-    }, 300);
+      }, 500);
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setUploadError(
+        error instanceof Error ? error.message : "Failed to process the file",
+      );
+      setIsProcessing(false);
+    }
   };
 
   // Handle node selection in the course map
   const handleNodeSelect = (nodeId: string) => {
     setSelectedNodeId(nodeId);
     setShowFeedbackPanel(true);
+    // Uncomment the line below to also show the node editor when a node is selected
+    // setShowNodeEditor(true);
   };
 
   // Handle module selection in the course map
@@ -277,6 +227,18 @@ const Home = () => {
           <div className="flex h-[calc(100vh-12rem)]">
             <div className="flex-1 overflow-hidden rounded-lg border bg-white shadow">
               <CourseMapView
+                courseTitle={
+                  JSON.parse(localStorage.getItem("courseData") || "{}")
+                    .title || "Uploaded Course"
+                }
+                courseCode={
+                  JSON.parse(localStorage.getItem("courseData") || "{}").code ||
+                  ""
+                }
+                modules={
+                  JSON.parse(localStorage.getItem("courseData") || "{}")
+                    .modules || []
+                }
                 onNodeSelect={handleNodeSelect}
                 onModuleSelect={handleModuleSelect}
               />
@@ -285,7 +247,7 @@ const Home = () => {
             {showFeedbackPanel && (
               <div className="w-96 ml-4">
                 <QMFeedbackPanel
-                  nodeId={selectedNodeId}
+                  selectedNode={selectedNodeId}
                   onClose={() => setShowFeedbackPanel(false)}
                   onApplySuggestion={handleApplySuggestion}
                 />
@@ -296,16 +258,14 @@ const Home = () => {
       </main>
 
       {/* Node Editor Dialog */}
-      {showNodeEditor && (
-        <NodeEditor
-          open={showNodeEditor}
-          onOpenChange={setShowNodeEditor}
-          onSave={(data) => {
-            console.log("Node saved:", data);
-            setShowNodeEditor(false);
-          }}
-        />
-      )}
+      <NodeEditor
+        open={showNodeEditor}
+        onOpenChange={setShowNodeEditor}
+        onSave={(data) => {
+          console.log("Node saved:", data);
+          setShowNodeEditor(false);
+        }}
+      />
 
       {/* Footer */}
       <footer className="bg-white border-t py-4">

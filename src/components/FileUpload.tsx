@@ -15,8 +15,8 @@ interface FileUploadProps {
 
 const FileUpload = ({
   onFileUploaded = () => {},
-  acceptedFileTypes = [".zip", ".csv", ".json"],
-  maxFileSize = 10 * 1024 * 1024, // 10MB default
+  acceptedFileTypes = [".imscc"],
+  maxFileSize = 100 * 1024 * 1024, // 10MB default
   isUploading = false,
   uploadProgress = 0,
   error = "",
@@ -124,8 +124,8 @@ const FileUpload = ({
                   Upload Canvas Course Export
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Drag and drop your Canvas course export file here, or click to
-                  browse
+                  Drag and drop your Canvas course export file (.imscc) here, or
+                  click to browse
                 </p>
                 <p className="text-xs text-gray-400">
                   Accepted file types: {acceptedFileTypes.join(", ")}
@@ -192,7 +192,7 @@ const FileUpload = ({
         <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
           <li>Export your Canvas course from the Settings page</li>
           <li>Select the "Course Content" export option</li>
-          <li>Download the export file when ready</li>
+          <li>Download the .imscc export file when ready</li>
           <li>Upload the file here to generate your course map</li>
         </ol>
       </div>
